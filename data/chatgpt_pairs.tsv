@@ -1,0 +1,171 @@
+# Chat-style pairs drafted with ChatGPT (~/Downloads/mn_latin_to_cyrillic_dataset.csv),
+# cleaned by hand: Cyrillic is written as typed (nadaa -> надаа, not надад),
+# brand and tech names stay Latin (github, docker), a Mongolian suffix on a
+# Latin word goes after a hyphen (google-ээс), no added capitals or commas.
+# latin<TAB>cyrillic
+sain baina uu	сайн байна уу
+yu hiij bgn	юу хийж байгаан
+ter chin aimr goy ym bnle	тэр чинь аймар гоё юм байна лээ
+myy al min bitii shaa	муу ал минь битгий шаа
+chi yu yriad bgn	чи юу яриад байгаан
+bi oilgohgu bn	би ойлгохгүй байна
+yagaad ingeed bga um	яагаад ингээд байгаа юм
+ene yu gesen ug ve	энэ юу гэсэн үг вэ
+yaj hiideg umbe	яаж хийдэг юм бэ
+boljil bnlda	болж л байна даа
+za tegeed yah ve	за тэгээд яах вэ
+nadaa tuslaach	надаа туслаач
+medehgu ee	мэдэхгүй ээ
+medku bn	мэдэхгүй байна
+tiim bh	тийм байх
+ugui bh aa	үгүй байх аа
+yostoi medehgu	ёстой мэдэхгүй
+yu bolood bgan	юу болоод байгаан
+chi harj chadah uu	чи харж чадах уу
+ene deer dar	энэ дээр дар
+ter ni haana bga	тэр нь хаана байгаа
+linkiig ni yvuulch	линкийг нь явуулч
+zurag yvuulj bolhu	зураг явуулж болох уу
+ingej hiij bolhuu	ингэж хийж болох уу
+yaj zasah ve	яаж засах вэ
+ene aldaa yu ve	энэ алдаа юу вэ
+ajillahgu bn	ажиллахгүй байна
+asaad untraad bn	асаад унтраад байна
+holbogdohgu bn	холбогдохгүй байна
+bolohgui l bn	болохгүй л байна
+za bolloo	за боллоо
+za bolchloo	за болчихлоо
+ajillaj bn	ажиллаж байна
+turshaad uzey	туршаад үзье
+dahin hiigeed uz	дахин хийгээд үз
+yag ali heseg ni ve	яг аль хэсэг нь вэ
+ene 2 iig niiluul	энэ 2-ыг нийлүүл
+nemeed bichvel bolhu	нэмээд бичвэл болох уу
+nadaa beldeed ug	надаа бэлдээд өг
+contentuudiig ni beldeed ug	контентуудыг нь бэлдээд өг
+bi uuruu hiij uzne	би өөрөө хийж үзнэ
+chi neg sain tailbarlaad ug	чи нэг сайн тайлбарлаад өг
+engiin ugeer hel	энгийн үгээр хэл
+arai todorhoi hel dee	арай тодорхой хэл дээ
+oilgomjtoi bolgood ug	ойлгомжтой болгоод өг
+boginohon hariulaarai	богинохон хариулаарай
+delgerengui tailbarla	дэлгэрэнгүй тайлбарла
+za za oilgolo	за за ойлголоо
+tegeed yamar uchirtai um	тэгээд ямар учиртай юм
+yr ni yaj ajildag umbe	ер нь яаж ажилладаг юм бэ
+yag yu hiideg company ve	яг юу хийдэг компани вэ
+ashig oldog umu	ашиг олдог юм уу
+une tuluh hrgtei yu	үнэ төлөх хэрэгтэй юу
+unegui ashiglaj bolhu	үнэгүй ашиглаж болох уу
+limit bdimu	лимит байдаг юм уу
+cart holboh hrgtei yu	карт холбох хэрэгтэй юу
+geree hiih hrgtei yu	гэрээ хийх хэрэгтэй юу
+local bh ystoi	local байх ёстой
+internetgui ajillah uu	интернетгүй ажиллах уу
+database haana hadgalagdah ve	database хаана хадгалагдах вэ
+server deer tavih uu	сервер дээр тавих уу
+docker ashiglaj bolhu	docker ашиглаж болох уу
+api ni bdimu	api нь байдаг юм уу
+documentation ni haana bn	documentation нь хаана байна
+github repo private bolgoh yaj ve	github repo private болгох яаж вэ
+ene code ajillah uu	энэ код ажиллах уу
+yamar tech ashiglah ve	ямар tech ашиглах вэ
+react deer hiij bolhu	react дээр хийж болох уу
+backend ni yu bh ve	backend нь юу байх вэ
+database songoh heregtei bn	database сонгох хэрэгтэй байна
+ene hesgiig oorchil	энэ хэсгийг өөрчил
+busad yumand ni hurehgui shuu	бусад юманд нь хүрэхгүй шүү
+zuvhun backgroundiig av	зөвхөн background-ийг ав
+urd talyn yumiig oorchilj bolohgui	урд талын юмыг өөрчилж болохгүй
+text ni buruu bn	текст нь буруу байна
+ene ug bish shde	энэ үг биш ш дээ
+ter chin tuv bish tuloo	тэр чинь төв биш төлөө
+dahin buruu hiichlee	дахин буруу хийчихлээ
+bi tegj heleegui shde	би тэгж хэлээгүй ш дээ
+minii helsneer hiigeech	миний хэлснээр хийгээч
+jaahan tseverhen bolgo	жаахан цэвэрхэн болго
+arai ih yumtai bn	арай их юмтай байна
+textiig ni bagasga	текстийг нь багасга
+useg ni tom bolgo	үсэг нь том болго
+ene zuv uu	энэ зөв үү
+yag ali standard deer bn	яг аль стандарт дээр байна
+buh bulgiig ni jagsaagaad ug	бүх бүлгийг нь жагсаагаад өг
+tootsood l bich	тооцоод л бич
+uur standard bnu	өөр стандарт байна уу
+ene heseg ni haana bga ve	энэ хэсэг нь хаана байгаа вэ
+omnoh huvilbaraas ni av	өмнөх хувилбараас нь ав
+suuliin resumeg ashigla	сүүлийн резюмег ашигла
+cv content bichij ug	cv контент бичиж өг
+achievement bvl ymar ve	achievement бол ямар вэ
+diplomnii ajilaa oruul	дипломын ажлаа оруул
+ajliin zar haana bn	ажлын зар хаана байна
+hen hen ursulduv	хэн хэн өрсөлдөв
+ter shatnaasaa hasagdsan umu	тэр шатнаасаа хасагдсан юм уу
+yag heden hun ashiglah bol	яг хэдэн хүн ашиглах бол
+ene sanaa ashigtai yu	энэ санаа ашигтай юу
+hereglegch her olon bga bol	хэрэглэгч хэр олон байгаа бол
+bi ingej bodoj bn	би ингэж бодож байна
+yu gej bodoj bn	юу гэж бодож байна
+chi yu gej bodjiin	чи юу гэж бодож байгаан
+zgr l helchih	зүгээр л хэлчих
+bitgii hudlaa yariarai	битгий худлаа яриарай
+bitii shaagaad bai	битгий шаагаад бай
+yu hutsaj bgn	юу хуцаж байгаан
+yostoi teneg yum	ёстой тэнэг юм
+balai yum be	балай юм бэ
+yamar aimr yum be	ямар аймар юм бэ
+za pizda min	за пизда минь
+ene chin arai denduu bn	энэ чинь арай дэндүү байна
+chi arai l bn shuu	чи арай л байна шүү
+al min	ал минь
+muu al min bitii sha	муу ал минь битгий шаа
+za tegeed boloo yu	за тэгээд болоо юу
+yu ve lalaraa	юу вэ лалараа
+ene yu ve lal	энэ юу вэ лал
+yagaad yr ni iim bdiin	яагаад ер нь ийм байдаг юм
+keyboardnii b deer yagaad b bdg um	keyboard-ний b дээр яагаад b байдаг юм
+mongoloor shiveh amarhan bishu	монголоор шивэх амархан биш үү
+galiglaj bichihtei adilhan bhin	галиглаж бичихтэй адилхан байна
+llm ashiglaad hurvuuldeg um hiij bolhu	llm ашиглаад хөрвүүлдэг юм хийж болох уу
+eniig hiivel ashiglah hun her olon bga bol	энийг хийвэл ашиглах хүн хэр олон байгаа бол
+googlees tataj avaad ashiglaj bolhu	google-ээс татаж аваад ашиглаж болох уу
+torguuld unah uu	торгуульд унах уу
+street view ashiglaad taniulj bolhu	street view ашиглаад таниулж болох уу
+datagaa yaj tataj avah ve	датагаа яаж татаж авах вэ
+ene ajliig ehleed sudlah uu	энэ ажлыг эхлээд судлах уу
+hugatsaa ni her bol	хугацаа нь хэр бол
+tusviin deed hyzgaar hed ve	төсвийн дээд хязгаар хэд вэ
+zurag ni hezee garah ve	зураг нь хэзээ гарах вэ
+1r block deer yu suulgasan be	1-р блок дээр юу суулгасан бэ
+holboo dohiololiin zurag hezee garah ve	холбоо дохиоллын зураг хэзээ гарах вэ
+bms systemiig hezee nevtruuleh ve	bms системийг хэзээ нэвтрүүлэх вэ
+bi aaviinhaa delguurt kass hiivel yah bol	би аавынхаа дэлгүүрт касс хийвэл яах бол
+ebarimt yaj hevleh ve	ebarimt яаж хэвлэх вэ
+camera suuriluuldag company bnu	камер суурилуулдаг компани байна уу
+noild ymr standard murduh ve	нойлд ямар стандарт мөрдөх вэ
+ene 2 iin yalgaa yu ve	энэ 2-ын ялгаа юу вэ
+dwg file iig skp bolgoj bolhu	dwg файлыг skp болгож болох уу
+belen zurag haanaas oloh ve	бэлэн зураг хаанаас олох вэ
+laptopoo 2 doh delgets bolgoj bolhu	laptop-оо 2 дахь дэлгэц болгож болох уу
+cursoroo delgets hoorond shiljuulj bolhu	курсороо дэлгэц хооронд шилжүүлж болох уу
+full screen bolgoj bolhu	full screen болгож болох уу
+github repo yaj private bolgoh ve	github repo яаж private болгох вэ
+ene hesgiig kiril bolgood ug	энэ хэсгийг кирилл болгоод өг
+minii bichseniig yag utgaar ni hurvuul	миний бичсэнийг яг утгаар нь хөрвүүл
+utgiig ni oorchilj bolohgui	утгыг нь өөрчилж болохгүй
+aldaatai bichsen ch oilgood hurvuul	алдаатай бичсэн ч ойлгоод хөрвүүл
+tovchilson ugiig ni taaj bolhu	товчилсон үгийг нь тааж болох уу
+asuultiin temdeg tavih uu	асуултын тэмдэг тавих уу
+tom jijig useg hamaagui	том жижиг үсэг хамаагүй
+latin usegeer bichsen mongoliig kiril bolgo	латин үсгээр бичсэн монголыг кирилл болго
+neg dor 100 jishee beldeed ug	нэг дор 100 жишээ бэлдээд өг
+csv file bolgood ug	csv файл болгоод өг
+train hiih datagaa yaj beldeh ve	train хийх датагаа яаж бэлдэх вэ
+input output hosluulj ug	input output хослуулж өг
+neg ug olon yanzaar bichigddeg	нэг үг олон янзаар бичигддэг
+yag hun shig bichseniig ni oilgoh heregtei	яг хүн шиг бичсэнийг нь ойлгох хэрэгтэй
+bi chamtai chatalsan chatnaas jishee avch bolhu	би чамтай чаталсан чатнаас жишээ авч болох уу
+buh chataa avtomataar unshij chadah uu	бүх чатаа автоматаар уншиж чадах уу
+ene dataset deer aldaa oruulmaar bn	энэ dataset дээр алдаа оруулмаар байна
+zuv bichleg ni tusdaa baganad baih uu	зөв бичлэг нь тусдаа баганад байх уу
+neg mor ni neg jishee baihaar hiigeerei	нэг мөр нь нэг жишээ байхаар хийгээрэй

@@ -1,0 +1,50 @@
+# Chat abbreviations seen in real messages, used to make training data.
+# latin<TAB>cyrillic (a word may have several Latin forms, one per line)
+bn	байна
+bna	байна
+bh	байх
+bj	байж
+bhd	байхад
+bga	байгаа
+bgaa	байгаа
+bgagaa	байгаагаа
+bgn	байгаан
+bgan	байгаан
+bdg	байдаг
+bsn	байсан
+bhgui	байхгүй
+bnu	байна уу
+bhu	байх уу
+bnle	байна лээ
+bnlda	байна л даа
+bdimu	байдаг юм уу
+bdiin	байдаг юм
+bvl	бол
+gvl	гэвэл
+gsn	гэсэн
+gej	гэж
+sn	сайн
+bs	бас
+thr	тэр
+tgd	тэгээд
+hrgtei	хэрэгтэй
+blmjtoi	боломжтой
+zgr	зүгээр
+medku	мэдэхгүй
+medehgu	мэдэхгүй
+bz	биз
+bizde	биздээ
+chin	чинь
+ni	нь
+min	минь
+yu	юу
+u	юу
+um	юм
+ym	юм
+umu	юм уу
+yumu	юм уу
+umbe	юм бэ
+shde	ш дээ
+yhu	яах уу
+bolhu	болох уу
+bitii	битгий
