@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copy to /usr/share/ibus/component/ so IBus can find the engine. -->
+<component>
+  <name>org.freedesktop.IBus.ATSAI</name>
+  <description>Mongolian: type Latin, a small model writes Cyrillic</description>
+  <exec>/home/khuslee/practice/ATS-AI/.venv/bin/python /home/khuslee/practice/ATS-AI/engine/main.py --ibus</exec>
+  <version>0.1</version>
+  <author>Khuslee</author>
+  <license>Private</license>
+  <homepage>https://github.com/Khuslee1/ATS-AI</homepage>
+  <textdomain>ats-ai</textdomain>
+  <engines>
+    <engine>
+      <name>ats-ai</name>
+      <language>mn</language>
+      <license>Private</license>
+      <author>Khuslee</author>
+      <layout>us</layout>
+      <longname>ATS-AI (Latin to Cyrillic)</longname>
+      <description>Mongolian typed in Latin letters, converted by a model</description>
+      <symbol>AI</symbol>
+      <rank>0</rank>
+    </engine>
+  </engines>
+</component>

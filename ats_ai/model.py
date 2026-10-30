@@ -113,6 +113,42 @@ def translate(model, vocab, sources, device):
     return [vocab.decode(row[1:].tolist()) for row in ys]
 
 
+@torch.no_grad()
+def candidates(model, vocab, context, latin, device="cpu", beams=3):
+    """The `beams` most likely spellings of one word, as (text, probability)."""
+    src = pad([vocab.source(context, latin)]).to(device)
+    memory = model.encode(src)
+    alive = [([BOS], 0.0)]           # (ids so far, log probability)
+    finished = []
+    for _ in range(MAX_OUT + 1):
+        ys = torch.tensor([ids for ids, _ in alive], device=device)
+        n = len(alive)
+        log_probs = model.decode(ys, memory.expand(n, -1, -1), src.expand(n, -1))[:, -1]
+        log_probs = log_probs.log_softmax(-1)
+        options = []
+        for (ids, score), row in zip(alive, log_probs):
+            top = row.topk(beams)
+            for lp, i in zip(top.values.tolist(), top.indices.tolist()):
+                options.append((ids + [i], score + lp))
+        options.sort(key=lambda o: o[1], reverse=True)
+        alive = []
+        for ids, score in options:
+            if ids[-1] == EOS:
+                finished.append((ids, score))
+            elif len(alive) < beams:
+                alive.append((ids, score))
+        if len(finished) >= beams or not alive:
+            break
+    finished.sort(key=lambda o: o[1], reverse=True)
+    seen, out = set(), []
+    for ids, score in finished[:beams]:
+        text = vocab.decode(ids[1:])
+        if text and text not in seen:
+            seen.add(text)
+            out.append((text, math.exp(score)))
+    return out or [(latin, 1.0)]
+
+
 def convert_sentences(model, vocab, sentences, device):
     """Convert whole Latin sentences word by word, feeding back own output."""
     words = [s.lower().split() for s in sentences]
