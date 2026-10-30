@@ -4,3 +4,4 @@ __pycache__/
 data/synthetic.tsv
 models/
 train.log
+data/raw/
