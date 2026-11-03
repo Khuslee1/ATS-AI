@@ -3,9 +3,9 @@
 Usage:
     .venv/bin/python tools/train.py data/synthetic.tsv models/base.pt [--epochs 2] [--steps N]
 
-Every epoch the model is scored on data/chatgpt_pairs.tsv (used to pick the
-best checkpoint) and on tests/real_chat.tsv (reported only, never used to
-choose). The best model goes to OUTPUT.
+Every epoch the model is scored on tests/real_chat.tsv (used to pick the best
+checkpoint) and on tests/history_chat.tsv if present (reported only, never
+used to choose). The best model goes to OUTPUT.
 
 Progress is saved to OUTPUT.last every SAVE_EVERY steps and on Ctrl+C.
 After a stop or a power cut, run the same command with --resume to carry
@@ -34,8 +34,8 @@ WARMUP_STEPS = 2000
 LOG_EVERY = 500
 SAVE_EVERY = 1000
 
-VALIDATION = ROOT / "data" / "chatgpt_pairs.tsv"
-TEST = ROOT / "tests" / "real_chat.tsv"
+VALIDATION = ROOT / "tests" / "real_chat.tsv"
+TEST = ROOT / "tests" / "history_chat.tsv"
 
 
 def load_rows(path, vocab):
@@ -100,6 +100,7 @@ def main(args):
         model.load_state_dict(state["model"])
         optimizer.load_state_dict(state["optimizer"])
         step, best = state["step"], state["best"]
+        del state  # free the copy on the GPU
         print(f"resuming at step {step}", flush=True)
     resumed_at = step
     started = time.time()
@@ -119,9 +120,9 @@ def main(args):
         nonlocal best
         model.eval()
         val, val_text = evaluate(model, vocab, VALIDATION, device)
-        _, test_text = evaluate(model, vocab, TEST, device)
+        test_text = evaluate(model, vocab, TEST, device)[1] if TEST.exists() else "no file"
         model.train()
-        print(f"epoch {epoch}: chatgpt_pairs {val_text} | real_chat {test_text}", flush=True)
+        print(f"epoch {epoch}: real_chat {val_text} | history_chat {test_text}", flush=True)
         if val > best:
             best = val
             save(output)

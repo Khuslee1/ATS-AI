@@ -9,6 +9,13 @@ the habits seen in real messages (tests/real_chat.tsv):
     question and other particles glued   хурдан уу -> hurdanuu
     known chat abbreviations             байна -> bn
 
+One person spells a letter the same way every time, so ө and ы are chosen once
+per sentence: өөрөө -> uuruu or ooroo, never uurou.
+
+News and Wikipedia have little chat language or English, so three hand-written
+lists are added, repeated enough to be learned: abbreviations.tsv,
+chatgpt_pairs.tsv and foreign.tsv (also with Mongolian suffixes).
+
 Usage:
     python3 -I tools/make_pairs.py OUTPUT.tsv CORPUS [CORPUS...] [--limit N]
 
@@ -37,6 +44,18 @@ DROP_RARE = 0.03
 
 GLUE = 0.5
 ABBREVIATE = 0.5
+SHORT_BAI = 0.4
+
+# How many training rows each hand-written entry becomes.
+ABBREVIATION_COPIES = 200
+CHAT_COPIES = 30
+FOREIGN_COPIES = 40
+SUFFIX_COPIES = 5
+CONTEXT_SAMPLES = 5000
+
+# Latin and Cyrillic endings for foreign words, by vowel harmony.
+BACK_SUFFIXES = [("iig", "ыг"), ("aa", "аа"), ("iin", "ын"), ("d", "д"), ("aar", "аар"), ("tai", "тай"), ("gui", "гүй"), ("uud", "ууд")]
+FRONT_SUFFIXES = [("iig", "ийг"), ("ee", "ээ"), ("iin", "ийн"), ("d", "д"), ("eer", "ээр"), ("tei", "тэй"), ("gui", "гүй"), ("uud", "үүд")]
 
 # Words that people glue onto the word before them.
 PARTICLES = {"уу", "үү", "юу", "юм", "даа", "дээ", "доо", "л", "бэ", "вэ", "шүү", "биз", "ш"}
@@ -53,12 +72,16 @@ SPELLINGS = {
     "с": [("s", 1)], "т": [("t", 1)], "у": [("u", 1)], "ф": [("f", 1)],
     "х": [("h", 1)], "ц": [("ts", 1)], "ч": [("ch", 1)], "ш": [("sh", 1)],
     "щ": [("sh", 1)], "ъ": [("", 1)], "ь": [("", 1)], "э": [("e", 1)],
-    "ө": [("o", 3), ("u", 1)],
     "ү": [("u", 1)],
-    "ы": [("y", 3), ("ii", 3), ("i", 2)],  # утгыг -> utgiig
     "ё": [("yo", 8), ("y", 1), ("o", 1)],
     "ю": [("yu", 6), ("u", 3), ("y", 1)],
     "я": [("ya", 6), ("y", 3), ("a", 1)],
+}
+
+# Spelled one way for a whole sentence (see typist).
+STYLE_LETTERS = {
+    "ө": [("o", 1), ("u", 1)],             # өөрөө -> ooroo or uuruu
+    "ы": [("y", 3), ("ii", 3), ("i", 2)],  # утгыг -> utgiig
 }
 
 LATIN_VOWELS = set("aeiouy")
@@ -79,8 +102,15 @@ def load_abbreviations():
     return table
 
 
+def typist():
+    """One person's fixed spelling of the letters people disagree on."""
+    return {letter: pick(choices) for letter, choices in STYLE_LETTERS.items()}
+
+
 def shorten(word):
     """Chat shortcuts inside a Cyrillic word, before spelling it."""
+    if word.startswith("бай") and random.random() < SHORT_BAI:
+        word = "б" + word[3:]                 # байгаарай -> bgaarai -> bgarai
     if word.endswith("гүй") and random.random() < 0.5:
         word = word[:-1]                      # ойлгохгүй -> oilgohgu
     if "чих" in word and random.random() < 0.5:
@@ -90,7 +120,7 @@ def shorten(word):
     return word
 
 
-def spell(word):
+def spell(word, style):
     """Spell one Cyrillic word in Latin, picking a random common variant."""
     word = shorten(word)
     out = []
@@ -103,10 +133,12 @@ def spell(word):
         elif ch == "е":
             # After a consonant е sounds like э; elsewhere like йэ.
             after_consonant = i > 0 and word[i - 1] not in "аэиоөуүыеёюя"
-            out.append("e" if after_consonant else pick([("ye", 7), ("e", 2), ("y", 1)]))
+            out.append("e" if after_consonant else pick([("ye", 5), ("e", 2), ("y", 3)]))
         elif ch == "й" and i > 0 and word[i - 1] == "и":
             # ий: ii or just i
             out.append(pick([("i", 2), ("", 1)]))
+        elif ch in style:
+            out.append(style[ch])
         else:
             out.append(pick(SPELLINGS.get(ch, [(ch, 1)])))
     latin = "".join(out)
@@ -136,11 +168,11 @@ def drop_vowels(latin):
     return latin[0] + "".join(parts)
 
 
-def type_word(word, common, abbreviations):
+def type_word(word, common, abbreviations, style):
     """How a person might type one Cyrillic word (or glued words) in Latin."""
     if word in abbreviations and random.random() < ABBREVIATE:
         return random.choice(abbreviations[word])
-    latin = spell(word.replace(" ", ""))
+    latin = spell(word.replace(" ", ""), style)
     # Two-letter words (ой, ус) shortened to one letter would mean anything.
     if len(word) >= 3 and random.random() < (DROP_COMMON if word in common else DROP_RARE):
         latin = drop_vowels(latin)
@@ -191,6 +223,49 @@ def sentences(paths, limit):
                 return
 
 
+def read_tsv(path):
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip() and not line.startswith("#"):
+            yield line.split("\t")
+
+
+def foreign_forms(latin, cyrillic):
+    """A word and its suffixed forms: (latin, cyrillic, copies)."""
+    yield latin, cyrillic, FOREIGN_COPIES
+    if " " in cyrillic:
+        return
+    vowels = [c for c in cyrillic if c in "аоуяёюэөүе"]
+    back = bool(vowels) and vowels[-1] in "аоуяёю"
+    for latin_end, cyrillic_end in BACK_SUFFIXES if back else FRONT_SUFFIXES:
+        joined = f"{cyrillic}-{cyrillic_end}" if latin == cyrillic else cyrillic + cyrillic_end
+        yield latin + latin_end, joined, SUFFIX_COPIES
+
+
+def chat_rows(contexts):
+    """Rows from the hand-written lists, half of them without context."""
+    def context():
+        return random.choice(contexts) if random.random() < 0.5 else ""
+
+    for latin, cyrillic in read_tsv(DATA / "abbreviations.tsv"):
+        for _ in range(ABBREVIATION_COPIES):
+            yield context(), latin, cyrillic
+
+    for latin, cyrillic in read_tsv(DATA / "foreign.tsv"):
+        for form, target, copies in foreign_forms(latin, cyrillic):
+            for _ in range(copies):
+                yield context(), form, target
+
+    for latin, cyrillic in read_tsv(DATA / "chatgpt_pairs.tsv"):
+        typed, wanted = latin.split(), cyrillic.split()
+        # Glued lines can't be paired word by word; abbreviations cover most.
+        if len(typed) != len(wanted):
+            continue
+        for i, (word, target) in enumerate(zip(typed, wanted)):
+            before = " ".join(wanted[max(0, i - CONTEXT_WORDS):i])
+            for _ in range(CHAT_COPIES):
+                yield before, word, target
+
+
 def main(args):
     limit = float("inf")
     if "--limit" in args:
@@ -206,15 +281,23 @@ def main(args):
     abbreviations = load_abbreviations()
 
     rows = 0
+    contexts = []
     with open(output, "w", encoding="utf-8") as f:
         for words in corpus:
+            style = typist()
             context = []
             for token in tokens(words):
-                latin = type_word(token, common, abbreviations)
+                latin = type_word(token, common, abbreviations, style)
                 f.write(f"{' '.join(context)}\t{latin}\t{token}\n")
                 context = (context + token.split())[-CONTEXT_WORDS:]
                 rows += 1
-    print(f"{len(corpus)} sentences, {rows} rows -> {output}", file=sys.stderr)
+            if len(contexts) < CONTEXT_SAMPLES and random.random() < 0.05:
+                contexts.append(" ".join(context))
+        extra = 0
+        for context, latin, cyrillic in chat_rows(contexts):
+            f.write(f"{context}\t{latin}\t{cyrillic}\n")
+            extra += 1
+    print(f"{len(corpus)} sentences, {rows} corpus rows, {extra} chat rows -> {output}", file=sys.stderr)
 
 
 if __name__ == "__main__":

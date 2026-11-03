@@ -5,3 +5,5 @@ data/synthetic.tsv
 models/
 train.log
 data/raw/
+tests/history_chat.tsv
+data/my_words.tsv

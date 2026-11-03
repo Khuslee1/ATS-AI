@@ -8,6 +8,7 @@ The context lets the model pick дуу or дүү from what came before.
 """
 
 import math
+import re
 
 import torch
 from torch import nn
@@ -17,6 +18,7 @@ CHARS = "abcdefghijklmnopqrstuvwxyz0123456789 -абвгдеёжзийклмно�
 MAX_IN = 48
 MAX_OUT = 32
 CONTEXT_WORDS = 2
+LATIN = re.compile("[a-z]")
 
 
 class Vocab:
@@ -32,6 +34,9 @@ class Vocab:
 
     def source(self, context, latin):
         """Token ids for the encoder; context is cut from the left if too long."""
+        # Training context is Cyrillic. After a Latin word the model garbles
+        # the next words: gmail ruu -> gmail магилруу.
+        context = " ".join(w for w in context.split() if not LATIN.search(w))
         word = self.encode(latin)[:MAX_IN - 1]
         room = MAX_IN - 1 - len(word)
         before = self.encode(context)[-room:] if room else []
@@ -137,11 +142,13 @@ def candidates(model, vocab, context, latin, device="cpu", beams=3):
                 finished.append((ids, score))
             elif len(alive) < beams:
                 alive.append((ids, score))
-        if len(finished) >= beams or not alive:
+        finished = sorted(finished, key=lambda o: o[1], reverse=True)[:beams]
+        # Scores only fall, so stop once no unfinished word can still make the
+        # list. Stopping at the first three finished keeps short unlikely ones.
+        if not alive or (len(finished) == beams and alive[0][1] <= finished[-1][1]):
             break
-    finished.sort(key=lambda o: o[1], reverse=True)
     seen, out = set(), []
-    for ids, score in finished[:beams]:
+    for ids, score in finished:
         text = vocab.decode(ids[1:])
         if text and text not in seen:
             seen.add(text)

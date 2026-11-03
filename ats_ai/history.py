@@ -4,6 +4,7 @@ One row per word: context<TAB>latin<TAB>cyrillic<TAB>how, where how is
     accepted   the first suggestion was kept
     picked     another candidate was chosen (the first one was wrong)
     latin      Esc kept the Latin letters (git, PLSE)
+    undone     Backspace right after this word: an earlier row was likely wrong
 
 The file stays on this computer (~/.local/share/ats-ai/history.tsv) and is
 never committed. Nothing is written in password fields or while learning

@@ -28,8 +28,9 @@ import torch  # noqa: E402
 
 from ats_ai.history import record  # noqa: E402
 from ats_ai.model import CONTEXT_WORDS, candidates, load  # noqa: E402
+from ats_ai.personal import Personal, WordList  # noqa: E402
 
-MODEL = ROOT / "models" / "base.pt"
+MODEL = ROOT / "models" / "v2.pt"
 
 # A candidate this close to the best one is worth showing: дуу 0.60 / дүү 0.26.
 AMBIGUOUS_RATIO = 10
@@ -47,12 +48,21 @@ SHORTCUT_MASK = (
     | IBus.ModifierType.SUPER_MASK
 )
 
+# Pressing only these says nothing about the word just committed.
+MODIFIER_KEYS = (
+    IBus.Shift_L, IBus.Shift_R, IBus.Control_L, IBus.Control_R,
+    IBus.Alt_L, IBus.Alt_R, IBus.Super_L, IBus.Super_R, IBus.Caps_Lock,
+)
+
 # Fields where nothing may be converted or remembered.
 SECRET_PURPOSES = (IBus.InputPurpose.PASSWORD, IBus.InputPurpose.PIN)
 
 torch.set_num_threads(2)
 MODEL_, VOCAB = load(MODEL, "cpu")
 candidates(MODEL_, VOCAB, "", "sain")  # the first call is slow; do it now
+PERSONAL = Personal()
+MY_WORDS = WordList(ROOT / "data" / "my_words.tsv")
+ABBREVIATIONS = WordList(ROOT / "data" / "abbreviations.tsv")
 
 
 def match_case(src, out):
@@ -74,6 +84,7 @@ class ATSAIEngine(IBus.Engine):
         self.context = []       # last committed Cyrillic words, lowercase
         self.secret = False     # password field: pass every key through
         self.paused = False     # learning paused from the input menu
+        self.last_word = None   # (context, latin, word, how) just committed
         self.table = IBus.LookupTable.new(9, 0, True, True)
 
         self.pause_prop = IBus.Property.new(
@@ -89,6 +100,11 @@ class ATSAIEngine(IBus.Engine):
         """Return True when ATS-AI used the key, False to let the app have it."""
         if self.secret or state & IBus.ModifierType.RELEASE_MASK:
             return False
+        if keyval == IBus.BackSpace and not self.buffer:
+            self.undo_word()  # also Ctrl+Backspace; the app deletes the text
+            return False
+        if keyval not in MODIFIER_KEYS and not self.buffer:
+            self.last_word = None  # something else came after that word
         if state & SHORTCUT_MASK:
             self.commit_word()
             return False
@@ -169,13 +185,19 @@ class ATSAIEngine(IBus.Engine):
             return
 
         context = " ".join(self.context[-CONTEXT_WORDS:])
-        found = candidates(MODEL_, VOCAB, context, self.buffer.lower())
+        latin = self.buffer.lower()
+        found = candidates(MODEL_, VOCAB, context, latin)
         best = found[0][1]
-        self.options = [
-            match_case(self.buffer, text)
-            for text, p in found
-            if p * AMBIGUOUS_RATIO >= best
-        ]
+        options = [text for text, p in found if p * AMBIGUOUS_RATIO >= best]
+        # The user's own list is final. Otherwise corrections, then known
+        # abbreviations go first; the model's words stay in the list so a
+        # wrong one can be changed back.
+        options = MY_WORDS.get(latin) or list(dict.fromkeys([
+            *filter(None, [PERSONAL.best(context, latin)]),
+            *ABBREVIATIONS.get(latin),
+            *options,
+        ]))
+        self.options = [match_case(self.buffer, o) for o in options]
         self.show_preedit(self.options[0])
 
         # Candidate window only when the model is unsure: дуу / дүү.
@@ -192,8 +214,13 @@ class ATSAIEngine(IBus.Engine):
             if word is None:
                 word = self.current()
                 how = "picked" if self.table.get_cursor_pos() else "accepted"
+            context = " ".join(self.context[-CONTEXT_WORDS:])
+            latin, lower = self.buffer.lower(), word.lower()
             if not self.paused:
-                record(" ".join(self.context[-CONTEXT_WORDS:]), self.buffer, word, how)
+                record(context, latin, lower, how)
+                if how in ("picked", "latin"):
+                    PERSONAL.learn(context, latin, lower)
+            self.last_word = (context, latin, lower, how)
             if how != "latin":
                 self.context = (self.context + word.lower().split())[-CONTEXT_WORDS:]
         text = (word or "") + suffix
@@ -202,18 +229,33 @@ class ATSAIEngine(IBus.Engine):
         self.buffer = ""
         self.refresh()
 
+    def undo_word(self):
+        """Backspace right after a commit: that word was probably wrong."""
+        if self.last_word is None:
+            return
+        context, latin, word, how = self.last_word
+        self.last_word = None
+        if not self.paused:
+            record(context, latin, word, "undone")
+            if how in ("picked", "latin"):
+                PERSONAL.forget(context, latin, word)
+        self.context = context.split()
+
     def do_focus_in(self):
         self.context = []
+        self.last_word = None
         self.register_properties(self.props)
 
     def do_focus_out(self):
         # Switching windows: keep what was typed instead of losing it.
         self.commit_word()
         self.context = []
+        self.last_word = None
 
     def do_reset(self):
         self.buffer = ""
         self.context = []
+        self.last_word = None
         self.refresh()
 
     def do_set_content_type(self, purpose, hints):

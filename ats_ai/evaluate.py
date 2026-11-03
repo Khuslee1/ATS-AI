@@ -19,8 +19,12 @@ def read_pairs(path):
     for line in open(path, encoding="utf-8"):
         if line.startswith("#") or not line.strip():
             continue
-        latin, cyrillic = line.rstrip("\n").split("\t")
-        pairs.append((latin, cyrillic))
+        row = line.rstrip("\n").split("\t")
+        # A hand-edited file must not stop a training run.
+        if len(row) != 2:
+            print(f"{path}: skipped a line without one tab: {line.strip()[:40]}", flush=True)
+            continue
+        pairs.append(tuple(row))
     return pairs
 
 
