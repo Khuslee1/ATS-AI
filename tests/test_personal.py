@@ -18,9 +18,30 @@ def test_one_correction_applies_everywhere(tmp_path):
     assert p.best("хэн нэг", "uur") == "өөр"
 
 
-def test_esc_teaches_keeping_latin(tmp_path):
+def test_esc_teaches_keeping_latin_the_second_time(tmp_path):
+    # One Esc is often just escaping a bad guess; twice means "always Latin".
     p = personal(tmp_path, ("", "git", "git", "latin"))
+    assert p.best("", "git") is None
+    p = personal(tmp_path, ("", "git", "git", "latin"), ("", "git", "git", "latin"))
     assert p.best("", "git") == "git"
+
+
+def test_esc_while_typing_needs_two(tmp_path):
+    p = personal(tmp_path)
+    p.learn("", "thdee", "thdee", "latin")
+    assert p.best("", "thdee") is None
+    p.learn("", "thdee", "thdee", "latin")
+    assert p.best("", "thdee") == "thdee"
+
+
+def test_undone_esc_does_not_count(tmp_path):
+    p = personal(
+        tmp_path,
+        ("", "sda", "sda", "latin"),
+        ("", "sda", "sda", "undone"),
+        ("", "sda", "sda", "latin"),
+    )
+    assert p.best("", "sda") is None
 
 
 def test_accepted_words_teach_nothing(tmp_path):

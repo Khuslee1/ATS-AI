@@ -60,6 +60,18 @@ FRONT_SUFFIXES = [("iig", "ийг"), ("ee", "ээ"), ("iin", "ийн"), ("d", "�
 # Words that people glue onto the word before them.
 PARTICLES = {"уу", "үү", "юу", "юм", "даа", "дээ", "доо", "л", "бэ", "вэ", "шүү", "биз", "ш"}
 
+# Particles glued onto an abbreviation in chat: bga + ldaa -> bgaldaa = байгаа л даа.
+# (Cyrillic, [Latin spellings]); {a} / {l} become the vowel that fits the word (даа/дээ/доо/дөө).
+GLUED_PARTICLES = [
+    ("л", ["l"]),
+    ("д{a}", ["d{l}", "d{l}{l}"]),
+    ("л д{a}", ["ld{l}", "ld{l}{l}"]),
+    ("шүү", ["shuu", "shu"]),
+    ("юм", ["um", "ym", "yum"]),
+    ("биз", ["bz", "biz"]),
+]
+GLUED_COPIES = 400
+
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 CYRILLIC_WORD = re.compile(r"[а-яёөү]+")
 
@@ -168,15 +180,25 @@ def drop_vowels(latin):
     return latin[0] + "".join(parts)
 
 
-def type_word(word, common, abbreviations, style):
-    """How a person might type one Cyrillic word (or glued words) in Latin."""
+def type_word(word, common, abbreviations, style, reserved=None):
+    """How a person might type one Cyrillic word (or glued words) in Latin.
+
+    reserved: latin -> {cyrillic} of the chat abbreviations. A dropped-vowel
+    spelling that is already an abbreviation of another word (bgal is
+    байгаа л, not байгаль) is not used; the word is typed in full instead.
+    """
     if word in abbreviations and random.random() < ABBREVIATE:
         return random.choice(abbreviations[word])
-    latin = spell(word.replace(" ", ""), style)
-    # Two-letter words (ой, ус) shortened to one letter would mean anything.
-    if len(word) >= 3 and random.random() < (DROP_COMMON if word in common else DROP_RARE):
-        latin = drop_vowels(latin)
-    return latin
+    # A few tries: a random shortcut may land on another word's abbreviation.
+    for _ in range(5):
+        latin = spell(word.replace(" ", ""), style)
+        # Two-letter words (ой, ус) shortened to one letter would mean anything.
+        if len(word) >= 3 and random.random() < (DROP_COMMON if word in common else DROP_RARE):
+            latin = drop_vowels(latin)
+        if not reserved or word in reserved.get(latin, {word}):
+            return latin
+    # Still clashing: letter by letter with no shortcuts (байгаль -> baigal).
+    return "".join(style.get(ch) or SPELLINGS.get(ch, [(ch, 1)])[0][0] for ch in word.replace(" ", ""))
 
 
 def tokens(words):
@@ -241,6 +263,32 @@ def foreign_forms(latin, cyrillic):
         yield latin + latin_end, joined, SUFFIX_COPIES
 
 
+def harmony(word):
+    """Long vowel of даа/дээ/доо/дөө that fits the word: (Cyrillic, Latin)."""
+    for ch in word:
+        if ch in "аяуы":
+            return "аа", "a"
+        if ch == "о":
+            return "оо", "o"
+        if ch == "ө":
+            return "өө", "o"
+        if ch in "эеүө":
+            return "ээ", "e"
+    return "ээ", "e"
+
+
+def glued_rows(abbreviations):
+    """Every abbreviation with every glued particle: (latin, cyrillic)."""
+    for latin, cyrillic in abbreviations:
+        if " " in cyrillic:  # already has a particle (bnu = байна уу)
+            continue
+        vowel, letter = harmony(cyrillic)
+        for particle, spellings in GLUED_PARTICLES:
+            target = cyrillic + " " + particle.replace("{a}", vowel)
+            for spelling in spellings:
+                yield latin + spelling.replace("{l}", letter), target
+
+
 def chat_rows(contexts):
     """Rows from the hand-written lists, half of them without context."""
     def context():
@@ -248,6 +296,10 @@ def chat_rows(contexts):
 
     for latin, cyrillic in read_tsv(DATA / "abbreviations.tsv"):
         for _ in range(ABBREVIATION_COPIES):
+            yield context(), latin, cyrillic
+
+    for latin, cyrillic in glued_rows(read_tsv(DATA / "abbreviations.tsv")):
+        for _ in range(GLUED_COPIES):
             yield context(), latin, cyrillic
 
     for latin, cyrillic in read_tsv(DATA / "foreign.tsv"):
@@ -279,6 +331,10 @@ def main(args):
     counts = Counter(w for words in corpus for w in words)
     common = {w for w, _ in counts.most_common(COMMON_WORDS)}
     abbreviations = load_abbreviations()
+    reserved = {}
+    pairs = list(read_tsv(DATA / "abbreviations.tsv"))
+    for latin, cyrillic in pairs + list(glued_rows(pairs)):
+        reserved.setdefault(latin, set()).add(cyrillic)
 
     rows = 0
     contexts = []
@@ -287,7 +343,7 @@ def main(args):
             style = typist()
             context = []
             for token in tokens(words):
-                latin = type_word(token, common, abbreviations, style)
+                latin = type_word(token, common, abbreviations, style, reserved)
                 f.write(f"{' '.join(context)}\t{latin}\t{token}\n")
                 context = (context + token.split())[-CONTEXT_WORDS:]
                 rows += 1

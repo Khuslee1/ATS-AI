@@ -26,11 +26,11 @@ from gi.repository import GLib, GObject, IBus  # noqa: E402
 
 import torch  # noqa: E402
 
+from ats_ai.config import MODELS, Config  # noqa: E402
 from ats_ai.history import record  # noqa: E402
 from ats_ai.model import CONTEXT_WORDS, candidates, load  # noqa: E402
 from ats_ai.personal import Personal, WordList  # noqa: E402
 
-MODEL = ROOT / "models" / "v2.pt"
 
 # A candidate this close to the best one is worth showing: дуу 0.60 / дүү 0.26.
 AMBIGUOUS_RATIO = 10
@@ -58,9 +58,35 @@ MODIFIER_KEYS = (
 SECRET_PURPOSES = (IBus.InputPurpose.PASSWORD, IBus.InputPurpose.PIN)
 
 torch.set_num_threads(2)
-MODEL_, VOCAB = load(MODEL, "cpu")
-candidates(MODEL_, VOCAB, "", "sain")  # the first call is slow; do it now
-PERSONAL = Personal()
+CONFIG = Config()
+
+
+class Model:
+    """The model named in settings.json; switched when the setting changes."""
+
+    def __init__(self):
+        self.name = None
+        self.net = self.vocab = None
+        self.current()
+
+    def current(self):
+        name = CONFIG.get("model")
+        if name != self.name:
+            try:
+                net, vocab = load(MODELS / name, "cpu")
+                candidates(net, vocab, "", "sain")  # the first call is slow; do it now
+            except Exception as error:  # keep typing with the model we have
+                logging.warning("model %s not loaded: %s", name, error)
+                if self.net is not None:
+                    return self.net, self.vocab
+                net, vocab = load(MODELS / "v2.pt", "cpu")
+            self.name, self.net, self.vocab = name, net, vocab
+            logging.info("model %s", name)
+        return self.net, self.vocab
+
+
+MODEL = Model()
+PERSONAL = Personal(config=CONFIG)
 MY_WORDS = WordList(ROOT / "data" / "my_words.tsv")
 ABBREVIATIONS = WordList(ROOT / "data" / "abbreviations.tsv")
 
@@ -83,7 +109,6 @@ class ATSAIEngine(IBus.Engine):
         self.options = []       # Cyrillic candidates for self.buffer
         self.context = []       # last committed Cyrillic words, lowercase
         self.secret = False     # password field: pass every key through
-        self.paused = False     # learning paused from the input menu
         self.last_word = None   # (context, latin, word, how) just committed
         self.table = IBus.LookupTable.new(9, 0, True, True)
 
@@ -91,7 +116,7 @@ class ATSAIEngine(IBus.Engine):
             "pause", IBus.PropType.TOGGLE,
             IBus.Text.new_from_string("Суралцахыг түр зогсоох"),
             "", IBus.Text.new_from_string("Бичсэн үгсийг түүхэнд хадгалахгүй"),
-            True, True, IBus.PropState.UNCHECKED, None,
+            True, True, self.pause_state(), None,
         )
         self.props = IBus.PropList()
         self.props.append(self.pause_prop)
@@ -186,7 +211,7 @@ class ATSAIEngine(IBus.Engine):
 
         context = " ".join(self.context[-CONTEXT_WORDS:])
         latin = self.buffer.lower()
-        found = candidates(MODEL_, VOCAB, context, latin)
+        found = candidates(*MODEL.current(), context, latin)
         best = found[0][1]
         options = [text for text, p in found if p * AMBIGUOUS_RATIO >= best]
         # The user's own list is final. Otherwise corrections, then known
@@ -219,7 +244,7 @@ class ATSAIEngine(IBus.Engine):
             if not self.paused:
                 record(context, latin, lower, how)
                 if how in ("picked", "latin"):
-                    PERSONAL.learn(context, latin, lower)
+                    PERSONAL.learn(context, latin, lower, how)
             self.last_word = (context, latin, lower, how)
             if how != "latin":
                 self.context = (self.context + word.lower().split())[-CONTEXT_WORDS:]
@@ -238,12 +263,21 @@ class ATSAIEngine(IBus.Engine):
         if not self.paused:
             record(context, latin, word, "undone")
             if how in ("picked", "latin"):
-                PERSONAL.forget(context, latin, word)
+                PERSONAL.forget(context, latin, word, how)
         self.context = context.split()
+
+    @property
+    def paused(self):
+        """Learning paused, from the input menu or the settings app."""
+        return CONFIG.get("paused")
+
+    def pause_state(self):
+        return IBus.PropState.CHECKED if self.paused else IBus.PropState.UNCHECKED
 
     def do_focus_in(self):
         self.context = []
         self.last_word = None
+        self.pause_prop.set_state(self.pause_state())  # may have changed in the app
         self.register_properties(self.props)
 
     def do_focus_out(self):
@@ -265,7 +299,7 @@ class ATSAIEngine(IBus.Engine):
 
     def do_property_activate(self, name, state):
         if name == "pause":
-            self.paused = state == IBus.PropState.CHECKED
+            CONFIG.save(paused=state == IBus.PropState.CHECKED)
             self.pause_prop.set_state(state)
             self.update_property(self.pause_prop)
             logging.info("learning %s", "paused" if self.paused else "resumed")

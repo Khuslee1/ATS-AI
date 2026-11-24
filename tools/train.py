@@ -56,11 +56,11 @@ def trim(batch):
     return batch[:, :used].long()
 
 
-def learning_rate(step, total):
+def learning_rate(step, total, peak):
     if step < WARMUP_STEPS:
-        return LEARNING_RATE * step / WARMUP_STEPS
+        return peak * step / WARMUP_STEPS
     progress = (step - WARMUP_STEPS) / max(1, total - WARMUP_STEPS)
-    return LEARNING_RATE * 0.5 * (1 + math.cos(math.pi * min(1.0, progress)))
+    return peak * 0.5 * (1 + math.cos(math.pi * min(1.0, progress)))
 
 
 def main(args):
@@ -76,6 +76,16 @@ def main(args):
         at = args.index("--steps")
         max_steps = int(args[at + 1])
         del args[at:at + 2]
+    init = None
+    if "--init" in args:
+        at = args.index("--init")
+        init = args[at + 1]
+        del args[at:at + 2]
+    lr = LEARNING_RATE
+    if "--lr" in args:
+        at = args.index("--lr")
+        lr = float(args[at + 1])
+        del args[at:at + 2]
     data, output = args
     last = output + ".last"
     Path(output).parent.mkdir(parents=True, exist_ok=True)
@@ -88,12 +98,18 @@ def main(args):
 
     model = Converter(len(vocab), **CONFIG).to(device)
     print(f"{sum(p.numel() for p in model.parameters()) / 1e6:.1f}M parameters", flush=True)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=0.01)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
     loss_fn = nn.CrossEntropyLoss(ignore_index=PAD, label_smoothing=0.05)
 
     steps_per_epoch = len(sources) // BATCH
     total = max_steps or epochs * steps_per_epoch
     step, best = 0, -1.0
+
+    if init:
+        state = torch.load(init, map_location=device)
+        model.load_state_dict(state["model"])
+        del state
+        print(f"starting from {init}", flush=True)
 
     if resume:
         state = torch.load(last, map_location=device)
@@ -142,7 +158,7 @@ def main(args):
                 tgt = trim(targets[rows]).to(device)
 
                 for group in optimizer.param_groups:
-                    group["lr"] = learning_rate(step, total)
+                    group["lr"] = learning_rate(step, total, lr)
                 logits = model(src, tgt[:, :-1])
                 loss = loss_fn(logits.reshape(-1, logits.size(-1)), tgt[:, 1:].reshape(-1))
                 optimizer.zero_grad(set_to_none=True)
