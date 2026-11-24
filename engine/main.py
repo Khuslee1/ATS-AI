@@ -26,14 +26,8 @@ from gi.repository import GLib, GObject, IBus  # noqa: E402
 
 import torch  # noqa: E402
 
-from ats_ai.config import MODELS, Config  # noqa: E402
-from ats_ai.history import record  # noqa: E402
-from ats_ai.model import CONTEXT_WORDS, candidates, load  # noqa: E402
-from ats_ai.personal import Personal, WordList  # noqa: E402
-
-
-# A candidate this close to the best one is worth showing: дуу 0.60 / дүү 0.26.
-AMBIGUOUS_RATIO = 10
+from ats_ai.model import CONTEXT_WORDS  # noqa: E402
+from ats_ai.typing import Typing  # noqa: E402
 
 logging.basicConfig(
     filename=Path.home() / ".cache" / "ats-ai-engine.log",
@@ -58,46 +52,10 @@ MODIFIER_KEYS = (
 SECRET_PURPOSES = (IBus.InputPurpose.PASSWORD, IBus.InputPurpose.PIN)
 
 torch.set_num_threads(2)
-CONFIG = Config()
-
-
-class Model:
-    """The model named in settings.json; switched when the setting changes."""
-
-    def __init__(self):
-        self.name = None
-        self.net = self.vocab = None
-        self.current()
-
-    def current(self):
-        name = CONFIG.get("model")
-        if name != self.name:
-            try:
-                net, vocab = load(MODELS / name, "cpu")
-                candidates(net, vocab, "", "sain")  # the first call is slow; do it now
-            except Exception as error:  # keep typing with the model we have
-                logging.warning("model %s not loaded: %s", name, error)
-                if self.net is not None:
-                    return self.net, self.vocab
-                net, vocab = load(MODELS / "v2.pt", "cpu")
-            self.name, self.net, self.vocab = name, net, vocab
-            logging.info("model %s", name)
-        return self.net, self.vocab
-
-
-MODEL = Model()
-PERSONAL = Personal(config=CONFIG)
-MY_WORDS = WordList(ROOT / "data" / "my_words.tsv")
-ABBREVIATIONS = WordList(ROOT / "data" / "abbreviations.tsv")
-
-
-def match_case(src, out):
-    """Keep the capitalisation of the Latin input: Sain -> Сайн, TSAI -> ЦАЙ."""
-    if src.isupper() and len(src) > 1:
-        return out.upper()
-    if src[0].isupper():
-        return out[0].upper() + out[1:]
-    return out
+# Candidates, saving and learning: the same code the Windows server runs.
+TYPING = Typing()
+TYPING.options("", "sain")  # load the model now, not on the first key
+CONFIG = TYPING.config
 
 
 class ATSAIEngine(IBus.Engine):
@@ -210,19 +168,7 @@ class ATSAIEngine(IBus.Engine):
             return
 
         context = " ".join(self.context[-CONTEXT_WORDS:])
-        latin = self.buffer.lower()
-        found = candidates(*MODEL.current(), context, latin)
-        best = found[0][1]
-        options = [text for text, p in found if p * AMBIGUOUS_RATIO >= best]
-        # The user's own list is final. Otherwise corrections, then known
-        # abbreviations go first; the model's words stay in the list so a
-        # wrong one can be changed back.
-        options = MY_WORDS.get(latin) or list(dict.fromkeys([
-            *filter(None, [PERSONAL.best(context, latin)]),
-            *ABBREVIATIONS.get(latin),
-            *options,
-        ]))
-        self.options = [match_case(self.buffer, o) for o in options]
+        self.options = TYPING.options(context, self.buffer)
         self.show_preedit(self.options[0])
 
         # Candidate window only when the model is unsure: дуу / дүү.
@@ -241,10 +187,7 @@ class ATSAIEngine(IBus.Engine):
                 how = "picked" if self.table.get_cursor_pos() else "accepted"
             context = " ".join(self.context[-CONTEXT_WORDS:])
             latin, lower = self.buffer.lower(), word.lower()
-            if not self.paused:
-                record(context, latin, lower, how)
-                if how in ("picked", "latin"):
-                    PERSONAL.learn(context, latin, lower, how)
+            TYPING.commit(context, latin, lower, how)  # nothing saved while paused
             self.last_word = (context, latin, lower, how)
             if how != "latin":
                 self.context = (self.context + word.lower().split())[-CONTEXT_WORDS:]
@@ -260,10 +203,7 @@ class ATSAIEngine(IBus.Engine):
             return
         context, latin, word, how = self.last_word
         self.last_word = None
-        if not self.paused:
-            record(context, latin, word, "undone")
-            if how in ("picked", "latin"):
-                PERSONAL.forget(context, latin, word, how)
+        TYPING.undo(context, latin, word, how)
         self.context = context.split()
 
     @property

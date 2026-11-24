@@ -7,3 +7,7 @@ train.log
 data/raw/
 tests/history_chat.tsv
 data/my_words.tsv
+data/synthetic*.tsv
+*.log
+.~lock.*
+data/my_words.xlsx

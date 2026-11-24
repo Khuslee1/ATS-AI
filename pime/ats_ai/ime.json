@@ -1,0 +1,11 @@
+{
+    "name": "ATS-AI",
+    "version": "0.1",
+    "guid": "{8286e884-7212-4adb-9dde-dfbb20bd77ee}",
+    "locale": "mn-MN",
+    "fallbackLocale": "mn",
+    "icon": "icon.ico",
+    "win8_icon": "",
+    "moduleName": "ats_ime",
+    "serviceName": "ATSTextService"
+}
