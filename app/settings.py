@@ -2,7 +2,7 @@
 
     .venv/bin/python app/settings.py
 
-Tab «Миний үгс»: the user's own words (data/my_words.tsv) and the corrections
+Tab «Миний үгс»: the user's own words (~/.local/share/ats-ai/my_words.tsv) and the corrections
 remembered while typing. Tab «Сүүлийн бичсэн»: the last words typed, marked
 right or wrong; a fix works at once while typing and is checked training data. All file work is in ats_ai/words.py; this file is
 only the window, so the Windows version can reuse the same logic.
@@ -352,7 +352,7 @@ class SettingsTab(QWidget):
         current = self.config.get("model")
         # v5.pt and v5.npz are the same model (torch / numpy): match by version.
         index = next((i for i in range(self.model.count())
-                      if Path(self.model.itemData(i)).stem == Path(current).stem), -1)
+                      if not current or Path(self.model.itemData(i)).stem == Path(current).stem), -1)
         if index < 0:
             self.model.addItem(f"{current}  (файл алга)", current)
             index = self.model.count() - 1

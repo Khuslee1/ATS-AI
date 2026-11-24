@@ -3,7 +3,7 @@
 ~/.local/share/ats-ai/settings.json, for example
     {"model": "v4.pt", "paused": false, "escapes": 2}
 
-    model     file in models/ the input method converts with
+    model     file in models/ the input method converts with ("" = the newest)
     paused    true: nothing is saved to the history or learned
     escapes   how many times Esc must keep the same word in Latin before it
               is always kept (0 = never learn from Esc)
@@ -24,7 +24,7 @@ from ats_ai.history import HISTORY
 ROOT = Path(__file__).resolve().parent.parent
 MODELS = ROOT / "models"
 PATH = HISTORY.parent / "settings.json"
-DEFAULTS = {"model": "v4.pt", "paused": False, "escapes": 2, "tester": "", "shared_upto": 0}
+DEFAULTS = {"model": "", "paused": False, "escapes": 2, "tester": "", "shared_upto": 0}
 ESCAPE_CHOICES = (1, 2, 0)
 
 

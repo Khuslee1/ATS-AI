@@ -9,7 +9,7 @@ applies, but a correction from elsewhere applies only while the user has
 never chosen anything else for that Latin. Otherwise the model decides.
 
 Word lists hold spellings written by hand: abbreviations and the user's own
-data/my_words.tsv. They reload when the file changes, so an edit works on the
+~/.local/share/ats-ai/my_words.tsv. They reload when the file changes, so an edit works on the
 next key press. A bad line is skipped; it must never break typing.
 
 Corrections the user removed in the settings app are listed in forgotten.tsv

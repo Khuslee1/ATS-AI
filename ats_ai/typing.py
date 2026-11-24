@@ -40,6 +40,10 @@ def match_case(src, out):
 
 def model_file(name, folder=MODELS):
     """models/<name> as a file to load: the numpy .npz if there is one, else the torch .pt."""
+    if not name:  # not chosen: the newest model there is
+        newest = sorted(folder.glob("*.npz"), key=lambda p: p.stat().st_mtime) or \
+            sorted(folder.glob("*.pt"), key=lambda p: p.stat().st_mtime)
+        return newest[-1] if newest else folder / "missing.npz"
     stem = Path(name).stem
     for suffix in (".npz", ".pt"):
         if (folder / (stem + suffix)).exists():
@@ -97,7 +101,7 @@ class Typing:
         self.config = config or Config(history.parent / "settings.json")
         self.convert = convert or Model(self.config)
         self.personal = personal or Personal(history, config=self.config)
-        self.my_words = WordList(root / "data" / "my_words.tsv")
+        self.my_words = WordList(history.parent / "my_words.tsv")  # the user's, next to the history
         self.abbreviations = WordList(root / "data" / "abbreviations.tsv")
 
     @property

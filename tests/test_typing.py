@@ -27,7 +27,7 @@ def test_options_order_and_case(tmp_path):
     assert t.options("", "duu") == ["дуу", "дүү"]          # дөө too unlikely to show
     assert t.options("", "Sain") == ["Сайн"]
     assert t.options("", "bn") == ["байна", "бн"]           # abbreviation first
-    (root / "data" / "my_words.tsv").write_text("duu\tдүү\n", encoding="utf-8")
+    (tmp_path / "share" / "my_words.tsv").write_text("duu\tдүү\n", encoding="utf-8")
     assert t.options("", "duu") == ["дүү"]                  # my words are final
     assert t.options("", "") == []
 

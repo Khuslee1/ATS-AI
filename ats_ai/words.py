@@ -1,7 +1,7 @@
 """The user's word lists, read and changed by the settings app.
 
 Two kinds of words:
-    my words      data/my_words.tsv, written by the user (thdee -> тэгэхдээ).
+    my words      ~/.local/share/ats-ai/my_words.tsv, written by the user (thdee -> тэгэхдээ).
                   Used before the model, see personal.WordList.
     remembered    corrections learned while typing: a candidate picked, or
                   Latin kept with Esc. They come from the history file, see
@@ -19,7 +19,7 @@ from pathlib import Path
 from ats_ai.history import HISTORY
 
 ROOT = Path(__file__).resolve().parent.parent
-MY_WORDS = ROOT / "data" / "my_words.tsv"
+MY_WORDS = HISTORY.parent / "my_words.tsv"  # the program folder may be read-only (/opt)
 FORGOTTEN = HISTORY.parent / "forgotten.tsv"
 
 HEADER = "# Your own words, used before the model. One per line: latin<TAB>cyrillic\n"
