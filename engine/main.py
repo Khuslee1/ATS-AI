@@ -11,6 +11,7 @@ other GPU work. Every committed word is written to the learning history
 """
 
 import logging
+import subprocess
 import sys
 from pathlib import Path
 
@@ -78,6 +79,12 @@ class ATSAIEngine(IBus.Engine):
         )
         self.props = IBus.PropList()
         self.props.append(self.pause_prop)
+        self.props.append(IBus.Property.new(
+            "settings", IBus.PropType.NORMAL,
+            IBus.Text.new_from_string("Тохиргоо…"),
+            "", IBus.Text.new_from_string("Миний үгс, засвар, загвар"),
+            True, True, IBus.PropState.UNCHECKED, None,
+        ))
 
     def do_process_key_event(self, keyval, keycode, state):
         """Return True when ATS-AI used the key, False to let the app have it."""
@@ -238,6 +245,11 @@ class ATSAIEngine(IBus.Engine):
             self.do_reset()
 
     def do_property_activate(self, name, state):
+        if name == "settings":
+            # Its own process: the window must never block typing.
+            subprocess.Popen([sys.executable, str(ROOT / "app" / "settings.py")],
+                             start_new_session=True)
+            return
         if name == "pause":
             CONFIG.save(paused=state == IBus.PropState.CHECKED)
             self.pause_prop.set_state(state)
