@@ -16,4 +16,6 @@ if ! has_qt; then
         exit 1
     fi
 fi
+# Prefer Wayland when the session has it (no extra X libraries needed), else X11.
+[ -n "${WAYLAND_DISPLAY:-}" ] && export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-wayland;xcb}"
 exec python3 "$APP/app/settings.py"

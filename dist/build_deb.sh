@@ -44,7 +44,7 @@ Version: $VERSION
 Architecture: all
 Maintainer: Khuslee <noreply@example.invalid>
 Installed-Size: $SIZE
-Depends: python3 (>= 3.12), python3-numpy, python3-gi, gir1.2-ibus-1.0, ibus, python3-pip, zenity, pkexec | policykit-1
+Depends: python3 (>= 3.12), python3-numpy, python3-gi, gir1.2-ibus-1.0, ibus, python3-pip, zenity, pkexec | policykit-1, libxcb-cursor0
 Recommends: python3-pyside6.qtwidgets, python3-pyside6.qtgui, python3-pyside6.qtcore
 Section: utils
 Priority: optional
