@@ -16,14 +16,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 # Ubuntu 24.04 has no PySide6 package: the .deb puts it in /opt/ats-ai/lib.
 sys.path.insert(1, str(Path(__file__).resolve().parent.parent / "lib"))
 
-from PySide6.QtCore import Qt  # noqa: E402
-from PySide6.QtGui import QBrush, QColor  # noqa: E402
+from PySide6.QtCore import QStandardPaths, Qt, QUrl  # noqa: E402
+from PySide6.QtGui import QBrush, QColor, QDesktopServices  # noqa: E402
 from PySide6.QtWidgets import (  # noqa: E402
     QAbstractItemView,
     QApplication,
     QCheckBox,
     QComboBox,
-    QFileDialog,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
@@ -454,17 +453,28 @@ class ShareTab(QWidget):
         )
         if answer != QMessageBox.Yes:
             return
-        default = str(Path.home() / share.file_name(code))
-        path, _ = QFileDialog.getSaveFileName(self, "Хадгалах", default, "TSV (*.tsv)")
-        if not path:
-            return
+        # Straight into Downloads: no save dialog to get lost in (and the system
+        # dialog does not always open with a downloaded Qt, Ubuntu 24.04).
+        folder = Path(QStandardPaths.writableLocation(QStandardPaths.DownloadLocation) or Path.home())
+        path = folder / share.file_name(code)
+        n = 2
+        while path.exists():  # a second export the same day: keep both
+            path = folder / share.file_name(code).replace(".tsv", f"-{n}.tsv")
+            n += 1
         try:
-            share.write(Path(path), code, self.rows, self.config.get("model"))
+            folder.mkdir(parents=True, exist_ok=True)
+            share.write(path, code, self.rows, self.config.get("model"))
         except (OSError, ValueError) as error:
             QMessageBox.warning(self, "Хадгалсангүй", str(error))
             return
         self.config.save(tester=code, shared_upto=self.end)
-        QMessageBox.information(self, "Хадгаллаа", f"{path}\n\nЭнэ файлыг хөгжүүлэгчид өгнө үү.")
+        box = QMessageBox(QMessageBox.Information, "Хадгаллаа",
+                          f"Файл хадгалагдлаа:\n{path}\n\nЭнэ файлыг хөгжүүлэгчид өгнө үү.", parent=self)
+        open_folder = box.addButton("Хавтсыг нээх", QMessageBox.ActionRole)
+        box.addButton(QMessageBox.Ok)
+        box.exec()
+        if box.clickedButton() is open_folder:
+            QDesktopServices.openUrl(QUrl.fromLocalFile(str(folder)))
         self.reload()
 
 

@@ -3,7 +3,7 @@
 Two parts:
 
 - **The server** (`ats_ai/server.py`) — the model, your words, history and settings.
-  A normal 64-bit Python with torch. Listens on `127.0.0.1:47321` only.
+  A normal 64-bit Python with numpy (no torch). Listens on `127.0.0.1:47321` only.
 - **The input method** (`pime/ats_ai/`) — runs inside PIME's small 32-bit Python,
   handles keys and asks the server. Without the server it keeps typing in Latin.
 
@@ -17,10 +17,9 @@ Two parts:
    git clone <repo> ATS-AI
    cd ATS-AI
    py -m venv .venv
-   .venv\Scripts\pip install torch --index-url https://download.pytorch.org/whl/cpu
-   .venv\Scripts\pip install PySide6-Essentials
+   .venv\Scripts\pip install numpy PySide6-Essentials
    ```
-   Copy `models\v4.pt` from the Linux machine (models are not in git).
+   Copy `models\v5.npz` from the Linux machine (models are not in git).
 3. Start the server and leave the window open:
    ```
    .venv\Scripts\python -m ats_ai.server
