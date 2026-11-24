@@ -142,6 +142,9 @@ def spell(word, style):
             out.append(pick([("ye", 1), ("ey", 1)]))
         elif ch == "е" and i > 0 and word[i - 1] == "ь":
             continue
+        elif ch == "ь" and (i + 1 == len(word) or word[i + 1] not in "аэиоөуүыеёюя"):
+            # харьж, сургууль, морь: often typed with i (harij, surguuli, mori).
+            out.append(pick([("", 1), ("i", 1)]))
         elif ch == "е":
             # After a consonant е sounds like э; elsewhere like йэ.
             after_consonant = i > 0 and word[i - 1] not in "аэиоөуүыеёюя"
