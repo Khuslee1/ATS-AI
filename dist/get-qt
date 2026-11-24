@@ -1,0 +1,5 @@
+#!/bin/sh
+# Root: put PySide6 into /opt/ats-ai/lib for the settings window (Ubuntu 24.04).
+set -e
+python3 -m pip install --quiet --disable-pip-version-check --no-warn-script-location \
+    --break-system-packages --upgrade --target /opt/ats-ai/lib PySide6-Essentials

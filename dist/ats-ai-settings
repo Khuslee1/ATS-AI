@@ -1,0 +1,19 @@
+#!/bin/sh
+# Opens the ATS-AI settings window. If Qt (PySide6) is missing — Ubuntu 24.04
+# has no package for it and the download at install time may have failed —
+# offers to fetch it (~100 MB) into /opt/ats-ai/lib first. No terminal needed.
+APP=/opt/ats-ai
+has_qt() { PYTHONPATH="$APP/lib" python3 -c "import PySide6.QtWidgets" 2>/dev/null; }
+
+if ! has_qt; then
+    zenity --question --title="ATS-AI" --width=380 \
+        --text="Тохиргооны цонхонд нэмэлт сан (Qt, ~100 MB) хэрэгтэй.\nОдоо интернетээс татах уу?" || exit 0
+    pkexec "$APP/app/get-qt" 2>&1 | zenity --progress --pulsate --auto-close --no-cancel \
+        --title="ATS-AI" --text="Татаж байна… хэдэн минут болно."
+    if ! has_qt; then
+        zenity --error --title="ATS-AI" --width=380 \
+            --text="Татаж чадсангүй. Интернетээ шалгаад дахин оролдоно уу.\n(Бичих нь ердийнхөөрөө ажиллана.)"
+        exit 1
+    fi
+fi
+exec python3 "$APP/app/settings.py"

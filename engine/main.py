@@ -244,8 +244,9 @@ class ATSAIEngine(IBus.Engine):
     def do_property_activate(self, name, state):
         if name == "settings":
             # Its own process: the window must never block typing.
-            subprocess.Popen([sys.executable, str(ROOT / "app" / "settings.py")],
-                             start_new_session=True)
+            launcher = ROOT / "app" / "ats-ai-settings"  # installed: fetches Qt if missing
+            command = [str(launcher)] if launcher.exists() else [sys.executable, str(ROOT / "app" / "settings.py")]
+            subprocess.Popen(command, start_new_session=True)
             return
         if name == "pause":
             CONFIG.save(paused=state == IBus.PropState.CHECKED)

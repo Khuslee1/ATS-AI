@@ -13,6 +13,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Ubuntu 24.04 has no PySide6 package: the .deb puts it in /opt/ats-ai/lib.
+sys.path.insert(1, str(Path(__file__).resolve().parent.parent / "lib"))
 
 from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtGui import QBrush, QColor  # noqa: E402
