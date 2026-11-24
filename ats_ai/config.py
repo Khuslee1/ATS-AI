@@ -71,6 +71,13 @@ class Config:
 
 
 def models(folder=MODELS):
-    """Model files to choose from, newest first (checkpoints *.pt.last skipped)."""
-    files = [p for p in folder.glob("*.pt") if p.is_file()]
-    return sorted(files, key=lambda p: p.stat().st_mtime, reverse=True)
+    """Model files to choose from, newest first, one per version.
+
+    v5.npz (numpy, what installed copies have) is listed instead of v5.pt
+    (torch) when both exist; checkpoints *.pt.last are skipped.
+    """
+    files = {}
+    for p in sorted(folder.glob("*.pt")) + sorted(folder.glob("*.npz")):
+        if p.is_file():
+            files[p.stem] = p  # .npz after .pt: it wins
+    return sorted(files.values(), key=lambda p: p.stat().st_mtime, reverse=True)

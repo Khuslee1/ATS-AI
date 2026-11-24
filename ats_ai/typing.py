@@ -38,43 +38,64 @@ def match_case(src, out):
     return out
 
 
-class TorchModel:
-    """The model named in settings.json; switched when the setting changes."""
+def model_file(name, folder=MODELS):
+    """models/<name> as a file to load: the numpy .npz if there is one, else the torch .pt."""
+    stem = Path(name).stem
+    for suffix in (".npz", ".pt"):
+        if (folder / (stem + suffix)).exists():
+            return folder / (stem + suffix)
+    return folder / name
 
-    def __init__(self, config):
+
+class Model:
+    """The model named in settings.json; switched when the setting changes.
+
+    Uses models/vN.npz with numpy (installed copies, no torch) when it exists,
+    otherwise models/vN.pt with torch (the development machine).
+    """
+
+    def __init__(self, config, folder=MODELS):
         self.config = config
+        self.folder = folder
         self.name = None
-        self.net = self.vocab = None
+        self.run = None
 
     def __call__(self, context, latin):
-        from ats_ai.model import candidates  # torch only when really used
-
-        net, vocab = self.current()
-        return candidates(net, vocab, context, latin)
+        return self.current()(context, latin)
 
     def current(self):
-        from ats_ai.model import candidates, load
-
         name = self.config.get("model")
         if name != self.name:
             try:
-                net, vocab = load(MODELS / name, "cpu")
-                candidates(net, vocab, "", "sain")  # the first call is slow; do it now
+                run = self._load(model_file(name, self.folder))
+                run("", "sain")  # the first call is slow; do it now
             except Exception as error:  # keep typing with the model we have
                 logging.warning("model %s not loaded: %s", name, error)
-                if self.net is not None:
-                    return self.net, self.vocab
-                net, vocab = load(MODELS / "v2.pt", "cpu")
-            self.name, self.net, self.vocab = name, net, vocab
+                if self.run is not None:
+                    return self.run
+                newest = sorted(self.folder.glob("*.np[z]")) or sorted(self.folder.glob("*.pt"))
+                run = self._load(newest[-1])
+            self.name, self.run = name, run
             logging.info("model %s", name)
-        return self.net, self.vocab
+        return self.run
+
+    @staticmethod
+    def _load(path):
+        if path.suffix == ".npz":
+            from ats_ai.numpy_model import NumpyModel
+
+            return NumpyModel(path)
+        from ats_ai.model import candidates, load  # torch only here
+
+        net, vocab = load(path, "cpu")
+        return lambda context, latin: candidates(net, vocab, context, latin)
 
 
 class Typing:
     def __init__(self, convert=None, config=None, personal=None, root=ROOT, history=HISTORY):
         self.history = history
         self.config = config or Config(history.parent / "settings.json")
-        self.convert = convert or TorchModel(self.config)
+        self.convert = convert or Model(self.config)
         self.personal = personal or Personal(history, config=self.config)
         self.my_words = WordList(root / "data" / "my_words.tsv")
         self.abbreviations = WordList(root / "data" / "abbreviations.tsv")

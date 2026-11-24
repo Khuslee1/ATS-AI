@@ -1,7 +1,7 @@
 """ATS-AI IBus engine: type Latin, the model writes Cyrillic.
 
 IBus starts this file (see engine/ats-ai.xml) with --ibus, using the
-project's .venv Python so torch is available. Keys work like in ATS:
+project's .venv Python (numpy, or torch for a .pt model). Keys work like in ATS:
 letters build the word, Space or punctuation commits it, Up/Down and 1-9
 pick a candidate, Enter only confirms, Esc keeps the Latin letters.
 
@@ -25,9 +25,7 @@ import gi  # noqa: E402
 gi.require_version("IBus", "1.0")
 from gi.repository import GLib, GObject, IBus  # noqa: E402
 
-import torch  # noqa: E402
-
-from ats_ai.model import CONTEXT_WORDS  # noqa: E402
+from ats_ai.vocab import CONTEXT_WORDS  # noqa: E402
 from ats_ai.typing import Typing  # noqa: E402
 
 logging.basicConfig(
@@ -52,7 +50,6 @@ MODIFIER_KEYS = (
 # Fields where nothing may be converted or remembered.
 SECRET_PURPOSES = (IBus.InputPurpose.PASSWORD, IBus.InputPurpose.PIN)
 
-torch.set_num_threads(2)
 # Candidates, saving and learning: the same code the Windows server runs.
 TYPING = Typing()
 TYPING.options("", "sain")  # load the model now, not on the first key

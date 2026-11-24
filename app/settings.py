@@ -350,15 +350,19 @@ class SettingsTab(QWidget):
             when = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d")
             self.model.addItem(f"{path.stem}  ({when})", path.name)
         current = self.config.get("model")
-        if self.model.findData(current) < 0:
+        # v5.pt and v5.npz are the same model (torch / numpy): match by version.
+        index = next((i for i in range(self.model.count())
+                      if Path(self.model.itemData(i)).stem == Path(current).stem), -1)
+        if index < 0:
             self.model.addItem(f"{current}  (файл алга)", current)
-        self.model.setCurrentIndex(self.model.findData(current))
+            index = self.model.count() - 1
+        self.model.setCurrentIndex(index)
         for w in (self.paused, self.escapes, self.model):
             w.blockSignals(False)
 
     def pick_model(self, i):
         name = self.model.itemData(i)
-        if name and name != self.config.get("model"):
+        if name and Path(name).stem != Path(self.config.get("model")).stem:
             self.config.save(model=name)
 
 

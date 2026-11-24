@@ -11,3 +11,5 @@ data/synthetic*.tsv
 *.log
 .~lock.*
 data/my_words.xlsx
+dist/out/
+models/*.npz

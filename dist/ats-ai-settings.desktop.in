@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=ATS-AI
+Comment=ATS-AI тохиргоо: миний үгс, засвар, загвар
+Exec=@DEST@/.venv/bin/python @DEST@/app/settings.py
+Icon=@DEST@/app/icon.png
+Terminal=false
+Categories=Utility;
+Keywords=ats;mongolian;keyboard;тохиргоо;
